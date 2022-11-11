@@ -1,0 +1,144 @@
+html, body {
+  background: #111;
+  font-size: small;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+body,
+select,
+button,
+input
+{
+  font-family: "MS Sans Serif", Geneva, sans-serif;
+  color: #eaeaea;
+}
+
+#sidebar {
+  background: #302c2e;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  width: 350px;
+  transition: left 0.333s;
+  overflow-y: scroll;
+}
+
+#sidebar.collapsed {
+  left: -351px;
+}
+
+#sidebar.collapsed,
+#sidebar.collapsed *
+{
+  pointer-events: none;
+  user-select: none;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex * {
+  margin: 0.5em;
+  flex: 1 0 0;
+}
+
+.padding {
+  padding: 0.5em;
+}
+
+.padding-small {
+  padding: 0.25em;
+}
+
+.spacing * {
+  margin: 0.5em;
+}
+
+.spacing-small * {
+  margin: 0.25em;
+}
+
+
+button,
+select,
+input
+{
+  background: #5a5353;
+  border: none;
+  padding: 0.5em 1em;
+}
+
+
+input {
+  background: #eaeaea;
+  color: #5a5353;
+}
+
+input[type=number] {
+  width: 5em;
+}
+
+button:hover,
+select:hover
+{
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1));
+}
+
+button:active,
+select:active
+{
+  background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15));
+}
+
+button[disabled],
+select[disabled]
+{
+  background: none;
+  color: #888;
+}
+
+
+.hidden,[hidden] {
+  display: none !important;
+}
+
+#tileList canvas {
+  background-color: black;
+}
+
+#tileList canvas.selected {
+  outline: #5a5353 0.5em solid;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar {
+  background: transparent;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.15);
+  border-right: 1px #222 solid;
+  border-left: 1px #222 solid;
+}
+
+::-webkit-scrollbar-thumb {
+  background:#5a5353;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1));
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15));
+}

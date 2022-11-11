@@ -1,0 +1,74 @@
+<html>
+  <head>
+    <!-- <link rel="stylesheet" href="utils.css"> -->
+    <link rel="stylesheet" href="styles.css">
+    
+  <!-- THIRD-PARTY -->
+    <script src="js/idb-keyval.js"></script>
+    <script src="js/yaml.js"></script>
+    
+  <!-- REDSTAR DEV -->
+    <script src="js/element-controls.js"></script>
+    <script src="js/changes.js"></script>
+    <script src="js/world-editor.js"></script>
+    <script src="js/cloak-utils.js"></script>
+    <script src="js/utils.js"></script>
+    
+    <title>Cloak World Editor</title>
+  </head>
+
+  <body>
+    
+    <canvas id="canvas"></canvas>
+    
+    <div id="sidebar" class="padding">
+      <div id="entryForm">
+        <div class="flex">
+          <button onclick="openLastProject();">Open Last Project</button>
+          <button onclick="openNewProject();">Open New Project</button>
+        </div>
+      </div>
+      
+      <div id="editorForm" hidden>
+        <div class="flex">
+          <button id="undoBtn" onclick="editor.changes.undo();" disabled>Undo</button>
+          <button id="redoBtn" onclick="editor.changes.redo();" disabled>Redo</button>
+          <button id="saveBtn" onclick="saveProject();" disabled>Save</button>
+        </div>
+        
+        <div class="padding">Tool:</div>
+        
+        <div class="spacing">
+          <select id="toolType" oninput="(canvas.drawingControls || {}).mode = this.value;">
+            <option value="path">Path</option>
+            <option value="line">Line</option>
+          </select>
+          <input id="toolSize" type="number" min=1 value=1 oninput="(canvas.drawingControls || {}).size = this.valueAsNumber;">
+        </div>
+        
+        <div class="padding">Options:</div>
+        
+        <div class="spacing">
+          <button onclick="toggleContrast();" selected>Toggle Contrast</button>
+          <button onclick="toggleColorMode();">Toggle Color Mode</button>
+          <button onclick="toggleGrid();">Toggle Grid</button>
+          <button onclick="toggleSpawns();">Toggle Spawns</button>
+          <button onclick="displayStats();">Stats</button>
+        </div>
+        
+        <div class="padding">Worlds:</div>
+        
+        <div id="worldList" class="spacing"></div>
+        
+        <div class="padding">Tiles:</div>
+        
+        <div id="tileList" class="spacing"></div>
+        
+        <div class="padding">Spawns:</div>
+        
+      </div>
+    </div>
+    
+    <script src="js/scripts.js"></script>
+  </body>
+</html>
