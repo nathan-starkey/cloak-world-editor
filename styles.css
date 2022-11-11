@@ -7,6 +7,12 @@ html, body {
   user-select: none;
 }
 
+table {
+  font-family: "MS Sans Serif", Geneva, sans-serif;
+  font-size: small;
+  width: 100%;
+}
+
 body,
 select,
 button,
@@ -29,7 +35,7 @@ input
 }
 
 #sidebar.collapsed {
-  left: -351px;
+  left: -363px;
 }
 
 #sidebar.collapsed,

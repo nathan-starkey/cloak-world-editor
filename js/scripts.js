@@ -20,7 +20,7 @@ window.addEventListener("beforeunload", ev => {
 
 
 window.addEventListener("keydown", ev => {
-  if (document.querySelector(":not(button):focus")) {
+  if (document.querySelector("input:focus,textarea:focus")) {
     return;
   }
   
@@ -34,6 +34,10 @@ window.addEventListener("keydown", ev => {
     ev.stopImmediatePropogation();
   } else if (ev.code == "KeyZ" && ev.ctrlKey) {
     undoBtn.click();
+    ev.preventDefault();
+    ev.stopImmediatePropogation();
+  } else if (ev.code == "Tab") {
+    sidebar.classList.toggle("collapsed");
     ev.preventDefault();
     ev.stopImmediatePropogation();
   }
