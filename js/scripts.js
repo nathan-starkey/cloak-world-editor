@@ -27,19 +27,19 @@ window.addEventListener("keydown", ev => {
   if (ev.code == "KeyS" && ev.ctrlKey) {
     saveBtn.click();
     ev.preventDefault();
-    ev.stopImmediatePropogation();
+    ev.stopImmediatePropagation();
   } else if ((ev.code == "KeyY" && ev.ctrlKey) || (ev.code == "KeyZ" && ev.ctrlKey && ev.shiftKey)) {
     redoBtn.click();
     ev.preventDefault();
-    ev.stopImmediatePropogation();
+    ev.stopImmediatePropagation();
   } else if (ev.code == "KeyZ" && ev.ctrlKey) {
     undoBtn.click();
     ev.preventDefault();
-    ev.stopImmediatePropogation();
+    ev.stopImmediatePropagation();
   } else if (ev.code == "Tab") {
     sidebar.classList.toggle("collapsed");
     ev.preventDefault();
-    ev.stopImmediatePropogation();
+    ev.stopImmediatePropagation();
   }
 })
 
@@ -135,13 +135,18 @@ function displayProject() {
           editor.tiles.push(index);
         }
       } else {
+        let wasSelected = thumb.classList.contains("selected");
+        
         for (let el of tileList.querySelectorAll(".selected")) {
           el.classList.remove("selected");
         }
-
-        thumb.classList.add("selected");
+        
         editor.tiles.length = 0;
-        editor.tiles.push(index);
+        
+        if (!wasSelected) {
+          editor.tiles.push(index);
+          thumb.classList.add("selected");
+        }
       }
     };
 
