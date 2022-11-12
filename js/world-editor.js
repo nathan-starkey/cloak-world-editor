@@ -6,6 +6,42 @@ class WorldEditor {
     this.states = new Map();
     this.changes = Changes(callbackFn, thisArg);
     this.tiles = [];
+    this.spawn = undefined;
+    
+    this.savedCommand = undefined;
+  }
+  
+  markSaved() {
+    this.savedCommand = this.changes[this.changes.length - 1];
+  }
+  
+  saved() {
+    return this.savedCommand == this.changes[this.changes.length - 1];
+  }
+  
+  hasTile(value) {
+    return this.tiles.includes(value);
+  }
+  
+  toggleTile(value, multi) {
+    if (multi) {
+      if (this.hasTile(value)) {
+        this.tiles.splice(this.tiles.indexOf(value), 1);
+        return false;
+      } else {
+        this.tiles.push(value);
+        return true;
+      }
+    } else {
+      if (this.tiles.length == 1 && this.tiles[0] == value) {
+        this.tiles.length = 0;
+        return false;
+      } else {
+        this.tiles.length = 0;
+        this.tiles.push(value);
+        return true;
+      }
+    }
   }
 
   open(project, world) {
@@ -197,7 +233,7 @@ class WorldEditorState {
       }
     }
     
-    if (showSpawns) {
+    if (showSpawns || toolType.value == "_spawns") {
       for (let spawn of this.world.spawns) {
         let creatureId = spawn.creatureId;
         let creature = this.project.data.creatures.find(creature => creature.id == creatureId);
@@ -215,6 +251,12 @@ class WorldEditorState {
         
         drawCloakSprite(context, this.project, spriteName, x, y, width, height,
           !(this.matrix.a >= 10 && !colorMode));
+        
+        if (spawn == editor.spawn) { // <-- WARNING: Reference to global object 'editor'
+          context.strokeStyle = "lime";
+          context.lineWidth = 1 / this.matrix.a;
+          context.strokeRect(x, y, width, height);
+        }
       }
     }
   }

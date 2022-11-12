@@ -39,6 +39,7 @@ function setMovementControls(element, matrix) {
     element.setPointerCapture(ev.pointerId);
     element.addEventListener("pointermove", pointermove);
     element.addEventListener("pointerup", pointerup);
+    element.addEventListener("lostpointercapture", lostpointercapture);
   }
 
   function pointermove(ev) {
@@ -48,11 +49,13 @@ function setMovementControls(element, matrix) {
   function pointerup(ev) {
     element.removeEventListener("pointermove", pointermove);
     element.removeEventListener("pointerup", pointerup);
+    element.removeEventListener("lostpointercapture", lostpointercapture);
   }
 
   function lostpointercapture(ev) {
     element.removeEventListener("pointermove", pointermove);
     element.removeEventListener("pointerup", pointerup);
+    element.removeEventListener("lostpointercapture", lostpointercapture);
   }
 }
 
@@ -114,6 +117,7 @@ function setDrawingControls(element, matrix, callback, thisArg) {
     element.setPointerCapture(ev.pointerId);
     element.addEventListener("pointermove", pointermove);
     element.addEventListener("pointerup", pointerup);
+    element.addEventListener("lostpointercapture", lostpointercapture);
     points.length = 0;
     pointermove(ev);
   }
@@ -167,6 +171,7 @@ function setDrawingControls(element, matrix, callback, thisArg) {
   function pointerup(ev) {
     element.removeEventListener("pointermove", pointermove);
     element.removeEventListener("pointerup", pointerup);
+    element.removeEventListener("lostpointercapture", lostpointercapture);
 
     if (points.length != 0) {
       callback.call(thisArg, points);
@@ -177,6 +182,7 @@ function setDrawingControls(element, matrix, callback, thisArg) {
   function lostpointercapture(ev) {
     element.removeEventListener("pointermove", pointermove);
     element.removeEventListener("pointerup", pointerup);
+    element.removeEventListener("lostpointercapture", lostpointercapture);
   }
 
   function pushPoint(x, y) {

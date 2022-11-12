@@ -1,7 +1,6 @@
 let editor = new WorldEditor(onChange);
 let canvas = document.getElementById("canvas");
 let context = canvas.getContext("2d");
-let savedCommand = undefined;
 let highContrast = false;
 let showSpawns = true;
 let colorMode = false;
@@ -11,8 +10,13 @@ let showGrid = 1;
 draw();
 
 
+/**
+ * EDITOR
+ **/
+
+
 window.addEventListener("beforeunload", ev => {
-  if (editor.changes[editor.changes.length - 1] != savedCommand) {
+  if (!editor.saved()) {
     ev.returnValue = "";
     ev.preventDefault();
   }
@@ -23,7 +27,7 @@ window.addEventListener("keydown", ev => {
   if (document.querySelector("input:focus,textarea:focus")) {
     return;
   }
-  
+
   if (ev.code == "KeyS" && ev.ctrlKey) {
     saveBtn.click();
     ev.preventDefault();
@@ -59,113 +63,66 @@ function draw() {
 function onChange() {
   undoBtn.disabled = !editor.changes.canUndo();
   redoBtn.disabled = !editor.changes.canRedo();
-  saveBtn.disabled = editor.changes[editor.changes.length - 1] == savedCommand;
+  saveBtn.disabled = false; // editor.saved();
 }
 
 
-function displayProject() {
+/**
+ * DISPLAY
+ **/
+
+
+function displayProject(editor, project) {
   entryForm.hidden = true;
   editorForm.hidden = false;
 
+  displayWorldButtons(editor, project);
+  displayTileThumbs(editor, project);
+}
+
+
+function displayWorldButtons(editor, project) {
   worldList.innerHTML = "";
 
   for (let world of project.data.worlds) {
-    let btn = document.createElement("button");
+    let worldButton = document.createElement("button");
+    worldButton.innerText = world.name;
+    worldButton.onclick = openWorld.bind(undefined, editor, project, world);
 
-    btn.innerText = world.name;
-    btn.onclick = () => editor.open(project, world);
-    worldList.append(btn);
+    worldList.append(worldButton);
   }
 
-  let createWorldbtn = document.createElement("button");
+  let createWorldButton = document.createElement("button");
+  createWorldButton.innerText = "Create World";
+  createWorldButton.onclick = createWorld.bind(undefined, editor, project);
 
-  createWorldbtn.innerText = "Create World";
-  worldList.append(createWorldbtn);
+  worldList.append(createWorldButton);
+}
 
-  createWorldbtn.onclick = () => {
-    let id = prompt("Enter new world ID:");
-    if (!id) return;
 
-    let name = prompt("Enter new world name:");
-    if (!name) return;
-
-    let width = prompt("Enter new world width", 32);
-    if (!width) return;
-
-    let height = prompt("Enter new world height", 32);
-    if (!height) return;
-
-    width = Math.max(1, Math.abs(parseInt(width) || 0));
-    height = Math.max(1, Math.abs(parseInt(height) || 0));
-
-    let world = {
-      id,
-      name,
-      width,
-      height,
-      cells: [{x:0,y:0,data:new Array(width * height).fill(-1)}],
-      spawns: []
-    };
-
-    editor.changes.push([
-      () => {
-        project.data.worlds.push(world);
-        displayProject();
-      },
-      () => {
-        project.data.worlds.pop();
-        displayProject();
-      }
-    ]);
-  };
-
+function displayTileThumbs(editor, project) {
+  tileList.innerHTML = "";
+  
+  let thumbs = [];
+  
   for (let tile of project.data.tiles) {
     let index = project.data.tiles.indexOf(tile);
     let thumb = project.resources.thumbs[tile.sprite];
     
-    thumb.title = tile.name + "\nSolid: " + tile.solid + "\nOpaque: " + tile.opaque;
-
-    thumb.onclick = (ev) => {
-      if (ev.shiftKey) {
-        if (editor.tiles.includes(index)) {
-          thumb.classList.remove("selected");
-          editor.tiles.splice(editor.tiles.indexOf(index), 1);
-        } else {
-          thumb.classList.add("selected");
-          editor.tiles.push(index);
-        }
-      } else {
-        let wasSelected = thumb.classList.contains("selected");
-        
-        for (let el of tileList.querySelectorAll(".selected")) {
-          el.classList.remove("selected");
-        }
-        
-        editor.tiles.length = 0;
-        
-        if (!wasSelected) {
-          editor.tiles.push(index);
-          thumb.classList.add("selected");
-        }
-      }
-    };
-
-    if (thumb) {
-      tileList.append(thumb);
-    }
-  }
-}
-
-
-function displayStats() {
-  if (editor.state) {
-    let world = editor.state.world;
+    thumbs.push(thumb);
+    thumb.title = tile.name +
+      "\nSolid: " + tile.solid +
+      "\nOpaque: " + tile.opaque;
     
-    alert(`${world.name} Stats
-Cells: ${world.cells.length}
-Spawns: ${world.spawns.length}`);
+    thumb.onclick = ev => toggleTile(editor, thumbs, index, ev.shiftKey);
+    tileList.append(thumb);
   }
 }
+
+
+/**
+ * OPTIONS
+ **/
 
 
 function toggleContrast() {
@@ -195,11 +152,150 @@ function toggleSpawns() {
 }
 
 
+function displayStats() {
+  if (editor.state) {
+    let world = editor.state.world;
+
+    alert(`-- Project Stats --
+Creatures: ${project.data.creatures.length}
+Tiles: ${project.data.tiles.length}
+Worlds: ${project.data.worlds.length}
+
+-- ${world.name} Stats --
+Cells: ${world.cells.length}
+Spawns: ${world.spawns.length}`);
+  }
+}
+
+
+/**
+ * WORLD
+ **/
+
+
+function createWorld(editor, project) {
+  let id = prompt("Enter new world ID:");
+  if (!id) return;
+
+  let name = prompt("Enter new world name:");
+  if (!name) return;
+
+  let width = prompt("Enter new world cell width", 32);
+  if (!width) return;
+
+  let height = prompt("Enter new world cell height", 32);
+  if (!height) return;
+
+  width = Math.max(1, Math.abs(parseInt(width) || 0));
+  height = Math.max(1, Math.abs(parseInt(height) || 0));
+
+  let world = {
+    id,
+    name,
+    width,
+    height,
+    cells: [{x:0, y:0, data:new Array(width * height).fill(-1)}],
+    spawns: []
+  };
+
+  editor.changes.push([
+    () => {
+      project.data.worlds.push(world);
+      displayWorldButtons(editor, project);
+    },
+    () => {
+      project.data.worlds.pop();
+      displayWorldButtons(editor, project);
+    }
+  ]);
+}
+
+
+function openWorld(editor, project, world) {
+  editor.open(project, world);
+}
+
+
+/**
+ * TILES
+ **/
+
+
+function toggleTile(editor, thumbs, index, multi) {
+  editor.toggleTile(index, multi);
+  
+  for (let thumb of thumbs) {
+    thumb.classList.remove("selected");
+  }
+  
+  for (let index of editor.tiles) {
+    thumbs[index].classList.add("selected");
+  }
+}
+
+
+/**
+ * SPAWNS
+ **/
+
+
+(function () {
+  canvas.addEventListener("pointerdown", pointerdown);
+  
+  let spawn = undefined;
+  
+  function pointerdown(ev) {
+    if (toolType.value == "_spawns" && (ev.button == 0 && !ev.shiftKey)) {
+      let point = editor.state.matrix.inverse().transformPoint(new DOMPoint(ev.x, ev.y));
+      
+      spawn = editor.state.world.spawns.find(spawn => {
+        let creature = project.data.creatures.find(creature => creature.id == spawn.creatureId);
+        if (!creature) return;
+        
+        return (point.x > spawn.x && point.x < spawn.x + creature.width && point.y > spawn.y && point.y < spawn.y + creature.height);
+      });
+      
+      if (!spawn) return;
+      
+      editor.spawn = spawn;
+      
+      canvas.addEventListener("pointermove", pointermove);
+      canvas.addEventListener("pointerup", pointerup);
+      canvas.addEventListener("lostpointercapture", lostpointercapture);
+    }
+  }
+  
+  function pointermove(ev) {
+    let point = editor.state.matrix.inverse().transformPoint(new DOMPoint(ev.x, ev.y));
+    
+    spawn.x = Math.floor(point.x);
+    spawn.y = Math.floor(point.y);
+  }
+  
+  function pointerup() {
+    canvas.removeEventListener("pointermove", pointermove);
+    canvas.removeEventListener("pointerup", pointerup);
+    canvas.removeEventListener("lostpointercapture", lostpointercapture);
+  }
+  
+  function lostpointercapture() {
+    canvas.removeEventListener("pointermove", pointermove);
+    canvas.removeEventListener("pointerup", pointerup);
+    canvas.removeEventListener("lostpointercapture", lostpointercapture);
+  }
+})();
+
+
+/**
+ * PROJECT
+ **/
+
+
 async function openLastProject() {
   let storage = await idb.get("cloak-editor") || {};
   let folder = storage.folder;
 
-  if (!folder) return alert("Unable to find the last project, try using 'Open new project'");
+  if (!folder) return alert("Unable to find the last project, try using 'Open New Project'");
 
   await openProjectIn(folder);
 }
@@ -229,7 +325,7 @@ async function saveProject() {
   await writable.write(text);
   await writable.close();
 
-  savedCommand = editor.changes[editor.changes.length - 1];
+  editor.markSaved();
   onChange();
 }
 
@@ -253,7 +349,7 @@ async function openProjectIn(folder) {
 
   Object.defineProperty(window, "project", {value: project});
 
-  displayProject();
+  displayProject(editor, project);
 }
 
 
@@ -281,15 +377,15 @@ function processDataInput(data) {
 function processDataOutput(data) {
   for (let world of data.worlds) {
     let emptyCells = [];
-    
+
     world.tiles = [];
 
     for (let cell of world.cells) {
       let empty = true;
-      
+
       for (let [i, value] of cell.data.entries()) {
         if (value == -1) continue;
-        
+
         empty = false;
 
         let tileId = data.tiles[value].id;
@@ -303,12 +399,12 @@ function processDataOutput(data) {
       cell.data = encodeCloakCellData(cell.data);
       cell.x /= world.width;
       cell.y /= world.height;
-      
+
       if (empty) {
         emptyCells.push(world.cells.indexOf(cell));
       }
     }
-    
+
     while (emptyCells.length) world.cells.splice(emptyCells.pop(), 1);
   }
 }

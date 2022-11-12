@@ -73,8 +73,10 @@
         
         <div class="spacing">
           <select id="toolType" oninput="(canvas.drawingControls || {}).mode = this.value;">
-            <option value="path">Path</option>
+            <option value="none">None</option>
+            <option value="path" selected>Path</option>
             <option value="line">Line</option>
+            <option value="_spawns">Spawns</option>
           </select>
           <input id="toolSize" type="number" min=1 value=1 oninput="(canvas.drawingControls || {}).size = this.valueAsNumber;">
         </div>
