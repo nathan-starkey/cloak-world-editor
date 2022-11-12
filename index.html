@@ -69,38 +69,68 @@
           <button id="saveBtn" onclick="saveProject();" disabled>Save</button>
         </div>
         
-        <div class="padding">Tool:</div>
+        <details open>
+          <summary class="padding">Tool</summary>
+          
+          <div class="spacing">
+            <select id="toolType" oninput="(canvas.drawingControls || {}).mode = this.value;">
+              <option value="none">None</option>
+              <option value="path" selected>Path</option>
+              <option value="line">Line</option>
+              <option value="_spawns">Spawns</option>
+            </select>
+            <input id="toolSize" type="number" min=1 value=1 oninput="(canvas.drawingControls || {}).size = this.valueAsNumber;">
+          </div>
+        </details>
         
-        <div class="spacing">
-          <select id="toolType" oninput="(canvas.drawingControls || {}).mode = this.value;">
-            <option value="none">None</option>
-            <option value="path" selected>Path</option>
-            <option value="line">Line</option>
-            <option value="_spawns">Spawns</option>
-          </select>
-          <input id="toolSize" type="number" min=1 value=1 oninput="(canvas.drawingControls || {}).size = this.valueAsNumber;">
-        </div>
+        <details open>
+          <summary class="padding">Options:</summary>
+          
+          <div class="spacing">
+            <button onclick="toggleContrast();" selected>Toggle Contrast</button>
+            <button onclick="toggleColorMode();">Toggle Color Mode</button>
+            <button onclick="toggleGrid();">Toggle Grid</button>
+            <button onclick="toggleSpawns();">Toggle Spawns</button>
+            <button onclick="displayStats();">Stats</button>
+          </div>
+        </details>
         
-        <div class="padding">Options:</div>
+        <details open>
+          <summary class="padding">Worlds:</summary>
+          
+          <div id="worldList" class="spacing"></div>
+        </details>
         
-        <div class="spacing">
-          <button onclick="toggleContrast();" selected>Toggle Contrast</button>
-          <button onclick="toggleColorMode();">Toggle Color Mode</button>
-          <button onclick="toggleGrid();">Toggle Grid</button>
-          <button onclick="toggleSpawns();">Toggle Spawns</button>
-          <button onclick="displayStats();">Stats</button>
-        </div>
+        <details open>
+          <summary class="padding">Tiles:</summary>
+          
+          <div id="tileList" class="spacing"></div>
+        </details>
         
-        <div class="padding">Worlds:</div>
-        
-        <div id="worldList" class="spacing"></div>
-        
-        <div class="padding">Tiles:</div>
-        
-        <div id="tileList" class="spacing"></div>
-        
-        <div class="padding">Spawns:</div>
-        
+        <details open>
+          <summary class="padding">Spawns:</summary>
+          
+          <table class="padding" oninput="contextPossiblyUnsaved = true; onChange();">
+            <tr>
+              <td>Creature ID
+              <td><input id="spawnCreatureId" oninput="editor.spawn.creatureId = this.value;">
+            <tr>
+              <td>X
+              <td><input id="spawnX" type="number" oninput="editor.spawn.x = this.valueAsNumber;">
+            <tr>
+              <td>Y
+              <td><input id="spawnY" type="number" oninput="editor.spawn.y = this.valueAsNumber;">
+            <tr>
+              <td>Chance Day
+              <td><input id="spawnChanceDay" type="number" oninput="editor.spawn.chanceDay = this.valueAsNumber / 100;">
+            <tr>
+              <td>Chance Night
+              <td><input id="spawnChanceNight" type="number" oninput="editor.spawn.chanceNight = this.valueAsNumber / 100;">
+            <tr>
+              <td>
+              <td><button onclick="deleteSpawn();">Delete This Spawn</button>
+          </table>
+        </details>
       </div>
     </div>
     

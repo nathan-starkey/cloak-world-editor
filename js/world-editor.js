@@ -239,8 +239,8 @@ class WorldEditorState {
         let creature = this.project.data.creatures.find(creature => creature.id == creatureId);
         let x = spawn.x;
         let y = spawn.y;
-        let width = creature?.width || 0;
-        let height = creature?.height || 0;
+        let width = creature?.width || 1;
+        let height = creature?.height || 1;
         let spriteName = creature?.sprite;
         
         context.fillStyle = "black";

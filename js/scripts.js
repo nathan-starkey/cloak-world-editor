@@ -5,6 +5,7 @@ let highContrast = false;
 let showSpawns = true;
 let colorMode = false;
 let showGrid = 1;
+let contextPossiblyUnsaved = false;
 
 
 draw();
@@ -16,7 +17,7 @@ draw();
 
 
 window.addEventListener("beforeunload", ev => {
-  if (!editor.saved()) {
+  if (!editor.saved() || contextPossiblyUnsaved) {
     ev.returnValue = "";
     ev.preventDefault();
   }
@@ -63,7 +64,7 @@ function draw() {
 function onChange() {
   undoBtn.disabled = !editor.changes.canUndo();
   redoBtn.disabled = !editor.changes.canRedo();
-  saveBtn.disabled = false; // editor.saved();
+  saveBtn.disabled = editor.saved() && !contextPossiblyUnsaved;
 }
 
 
@@ -250,14 +251,27 @@ function toggleTile(editor, thumbs, index, multi) {
       
       spawn = editor.state.world.spawns.find(spawn => {
         let creature = project.data.creatures.find(creature => creature.id == spawn.creatureId);
-        if (!creature) return;
+        let width = creature?.width ?? 1;
+        let height = creature?.height ?? 1;
         
-        return (point.x > spawn.x && point.x < spawn.x + creature.width && point.y > spawn.y && point.y < spawn.y + creature.height);
+        return (point.x > spawn.x && point.x < spawn.x + width && point.y > spawn.y && point.y < spawn.y + height);
       });
       
-      if (!spawn) return;
+      if (!spawn) {
+        spawn = {
+          creatureId: spawnCreatureId.value,
+          x: Math.floor(point.x),
+          y: Math.floor(point.y),
+          chanceDay: (spawnChanceDay.valueAsNumber || 0) / 100,
+          chanceNight: (spawnChanceNight.valueAsNumber || 0) / 100
+        };
+        
+        editor.state.world.spawns.push(spawn);
+        contextPossiblyUnsaved = true;
+        onChange();
+      }
       
-      editor.spawn = spawn;
+      selectSpawn(spawn);
       
       canvas.addEventListener("pointermove", pointermove);
       canvas.addEventListener("pointerup", pointerup);
@@ -270,6 +284,10 @@ function toggleTile(editor, thumbs, index, multi) {
     
     spawn.x = Math.floor(point.x);
     spawn.y = Math.floor(point.y);
+    contextPossiblyUnsaved = true;
+    onChange();
+    
+    selectSpawn(spawn);
   }
   
   function pointerup() {
@@ -284,6 +302,30 @@ function toggleTile(editor, thumbs, index, multi) {
     canvas.removeEventListener("lostpointercapture", lostpointercapture);
   }
 })();
+
+
+function selectSpawn(spawn) {
+  editor.spawn = spawn;
+  spawnCreatureId.value = spawn ? spawn.creatureId : "";
+  spawnX.value = spawn ? spawn.x : "";
+  spawnY.value = spawn ? spawn.y : "";
+  spawnChanceDay.value = spawn ? spawn.chanceDay * 100 : "";
+  spawnChanceNight.value = spawn ? spawn.chanceNight * 100 : "";
+}
+
+
+function deleteSpawn() {
+  if (editor.spawn) {
+    if (confirm("Are you sure? This action can't be undone")) {
+      let spawns = editor.state.world.spawns;
+      
+      spawns.splice(spawns.indexOf(editor.spawn), 1);
+      selectSpawn(undefined);
+      contextPossiblyUnsaved = true;
+      onChange();
+    }
+  }
+}
 
 
 /**
@@ -325,6 +367,8 @@ async function saveProject() {
   await writable.write(text);
   await writable.close();
 
+  contextPossiblyUnsaved = false;
+  
   editor.markSaved();
   onChange();
 }
