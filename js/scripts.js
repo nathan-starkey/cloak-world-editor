@@ -103,18 +103,18 @@ function displayWorldButtons(editor, project) {
 
 function displayTileThumbs(editor, project) {
   tileList.innerHTML = "";
-  
+
   let thumbs = [];
-  
+
   for (let tile of project.data.tiles) {
     let index = project.data.tiles.indexOf(tile);
     let thumb = project.resources.thumbs[tile.sprite];
-    
+
     thumbs.push(thumb);
     thumb.title = tile.name +
       "\nSolid: " + tile.solid +
       "\nOpaque: " + tile.opaque;
-    
+
     thumb.onclick = ev => toggleTile(editor, thumbs, index, ev.shiftKey);
     tileList.append(thumb);
   }
@@ -224,11 +224,11 @@ function openWorld(editor, project, world) {
 
 function toggleTile(editor, thumbs, index, multi) {
   editor.toggleTile(index, multi);
-  
+
   for (let thumb of thumbs) {
     thumb.classList.remove("selected");
   }
-  
+
   for (let index of editor.tiles) {
     thumbs[index].classList.add("selected");
   }
@@ -242,21 +242,21 @@ function toggleTile(editor, thumbs, index, multi) {
 
 (function () {
   canvas.addEventListener("pointerdown", pointerdown);
-  
+
   let spawn = undefined;
-  
+
   function pointerdown(ev) {
     if (toolType.value == "_spawns" && (ev.button == 0 && !ev.shiftKey)) {
       let point = editor.state.matrix.inverse().transformPoint(new DOMPoint(ev.x, ev.y));
-      
+
       spawn = editor.state.world.spawns.find(spawn => {
         let creature = project.data.creatures.find(creature => creature.id == spawn.creatureId);
         let width = creature?.width ?? 1;
         let height = creature?.height ?? 1;
-        
+
         return (point.x > spawn.x && point.x < spawn.x + width && point.y > spawn.y && point.y < spawn.y + height);
       });
-      
+
       if (!spawn) {
         spawn = {
           creatureId: spawnCreatureId.value,
@@ -265,37 +265,37 @@ function toggleTile(editor, thumbs, index, multi) {
           chanceDay: (spawnChanceDay.valueAsNumber || 0) / 100,
           chanceNight: (spawnChanceNight.valueAsNumber || 0) / 100
         };
-        
+
         editor.state.world.spawns.push(spawn);
         contextPossiblyUnsaved = true;
         onChange();
       }
-      
+
       selectSpawn(spawn);
-      
+
       canvas.addEventListener("pointermove", pointermove);
       canvas.addEventListener("pointerup", pointerup);
       canvas.addEventListener("lostpointercapture", lostpointercapture);
     }
   }
-  
+
   function pointermove(ev) {
     let point = editor.state.matrix.inverse().transformPoint(new DOMPoint(ev.x, ev.y));
-    
+
     spawn.x = Math.floor(point.x);
     spawn.y = Math.floor(point.y);
     contextPossiblyUnsaved = true;
     onChange();
-    
+
     selectSpawn(spawn);
   }
-  
+
   function pointerup() {
     canvas.removeEventListener("pointermove", pointermove);
     canvas.removeEventListener("pointerup", pointerup);
     canvas.removeEventListener("lostpointercapture", lostpointercapture);
   }
-  
+
   function lostpointercapture() {
     canvas.removeEventListener("pointermove", pointermove);
     canvas.removeEventListener("pointerup", pointerup);
@@ -318,7 +318,7 @@ function deleteSpawn() {
   if (editor.spawn) {
     if (confirm("Are you sure? This action can't be undone")) {
       let spawns = editor.state.world.spawns;
-      
+
       spawns.splice(spawns.indexOf(editor.spawn), 1);
       selectSpawn(undefined);
       contextPossiblyUnsaved = true;
@@ -367,8 +367,47 @@ async function saveProject() {
   await writable.write(text);
   await writable.close();
 
+  // BEGIN EXPORT DEBUG GAME CACHE
+  file = await folder.getFileHandle("cache.js", {create:true});
+  writable = await file.createWritable();
+  await writable.write(function () {
+    let components = [];
+
+    components.push(`document.body.append(function () {
+  let script = document.createElement("script");
+
+  script.id = "content.yml";
+
+  script.type = "text/plain";
+
+  script.textContent = ${JSON.stringify(text)};
+
+  return script;
+} ());`);
+
+    resources.images.forEach((image, index) => {
+      let node = data.images[index];
+
+      components.push(`document.body.append(function () {
+  let image = document.createElement("img");
+
+  image.id = ${JSON.stringify("images/" + node.name + ".png")};
+
+  image.hidden = true;
+
+  image.src = ${JSON.stringify(image.src)};
+
+  return image;
+} ());`);
+    });
+
+    return components.join("\n\n\n")
+  } ());
+  await writable.close();
+  // END EXPORT DEBUG GAME CACHE
+
   contextPossiblyUnsaved = false;
-  
+
   editor.markSaved();
   onChange();
 }
