@@ -1,0 +1,45 @@
+<!doctype>
+
+<html>
+  <head>
+    <title>Cloak</title>
+    <style>
+html,
+body
+{
+  height: 100%;
+  overflow: hidden;
+}
+
+body
+{
+  background-color: #000;
+  margin: 0;
+}
+</style>
+  </head>
+
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+const canvas = document.getElementById("canvas");
+const context = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+window.addEventListener("resize", function (ev) {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+    </script>
+
+    <script src="../../cloak-data/cache.js" onerror="alert('Can\'t locate ../../cloak-data/cache.js');"></script>
+
+    <script src="yaml.js"></script>
+    <script src="cloak-utils.js"></script>
+    <script src="data.js"></script>
+    <script src="scripts.js"></script>
+  </body>
+</html>
