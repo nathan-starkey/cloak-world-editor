@@ -105,10 +105,11 @@ function displayTileThumbs(editor, project) {
   tileList.innerHTML = "";
 
   let thumbs = [];
+  let defaultThumb = project.resources.thumbs["crab"];
 
   for (let tile of project.data.tiles) {
     let index = project.data.tiles.indexOf(tile);
-    let thumb = project.resources.thumbs[tile.sprite];
+    let thumb = project.resources.thumbs[tile.sprite] || defaultThumb;
 
     thumbs.push(thumb);
     thumb.title = tile.name +
@@ -359,14 +360,23 @@ async function saveProject() {
 
   processDataOutput(data);
 
-  let text = YAML.stringify(data);
+  data.worlds.forEach(world => {
+    world.chunks.forEach(chunk => {
+      chunk.data = `{wrap}[${chunk.data}]{/wrap}`;
+    });
+  });
 
-  let file = await folder.getFileHandle("content.yml");
+  let text = JSON.stringify(data, undefined, 2);
+
+  text = text.split("\"{wrap}").join("").split("{/wrap}\"").join("");
+
+  let file = await folder.getFileHandle("content.json");
   let writable = await file.createWritable();
 
   await writable.write(text);
   await writable.close();
 
+  /*
   // BEGIN EXPORT DEBUG GAME CACHE
   file = await folder.getFileHandle("cache.js", {create:true});
   writable = await file.createWritable();
@@ -405,6 +415,7 @@ async function saveProject() {
   } ());
   await writable.close();
   // END EXPORT DEBUG GAME CACHE
+  */
 
   contextPossiblyUnsaved = false;
 
@@ -414,7 +425,7 @@ async function saveProject() {
 
 
 async function openProjectIn(folder) {
-  if (await folder.requestPermission({mode: "readwrite"}) != "granted") {
+  if (await folder.requestPermission({mode: "read"}) != "granted") {
     return;
   }
 
@@ -424,9 +435,10 @@ async function openProjectIn(folder) {
   });
 
   let data = await fetchCloakData(folder);
-  let resources = await fetchCloakResources(folder, data);
 
   processDataInput(data);
+  
+  let resources = await fetchCloakResources(folder, data);
 
   let project = {folder, data, resources};
 
@@ -437,57 +449,103 @@ async function openProjectIn(folder) {
 
 
 function processDataInput(data) {
-  for (let world of data.worlds) {
-    for (let cell of world.cells) {
-      cell.x *= world.width;
-      cell.y *= world.height;
-      cell.data = decodeCloakCellData(cell.data);
+  for (let image of data.images) {
+    image.name = image.id;
+    image.sprites = [];
 
-      for (let [i, value] of cell.data.entries()) {
-        if (value == -1) continue;
-
-        let tileId = world.tiles[value];
-
-        cell.data[i] = data.tiles.findIndex(tile => tile.id == tileId);
+    for (let sprite of data.sprites) {
+      if (sprite.image == image.id) {
+        image.sprites.push(sprite);
       }
     }
 
-    delete world.tiles;
+    image.width = image.sprites[0].width;
+    image.height = image.sprites[0].height;
+
+    image.sprites.sort((a, b) => a.x > b.x ? 1 : a.x == b.x ? 0 : -1).sort((a, b) => a.y > b.y ? 1 : a.y == b.y ? 0 : -1);
+    image.sprites = image.sprites.map(sprite => sprite.id);
+    
+    delete image.id;
+    delete image.path;
+  }
+
+  for (let tile of data.tiles) {
+    tile.sprite = tile.sprites[0];
+  }
+
+  for (let world of data.worlds) {
+    world.width = 32;
+    world.height = 32;
+    world.cells = world.chunks;
+
+    for (let cell of world.cells) {
+      cell.x *= 32;
+      cell.y *= 32;
+
+      for (let [i, index] of cell.data.entries()) {
+        let tileId = world.tilePalette[index];
+        let tile = data.tiles.findIndex(tile => tile.id == tileId);
+
+        cell.data[i] = tile;
+      }
+    }
+    
+    // delete world.chunks;
   }
 }
 
 
 function processDataOutput(data) {
+  for (let image of data.images) {
+    image.id = image.name;
+    image.path = `images/${image.name}.png`;
+    delete image.name;
+    delete image.width;
+    delete image.height;
+    delete image.sprites;
+  }
+
+  for (let tile of data.tiles) {
+    delete tile.sprite;
+  }
+
   for (let world of data.worlds) {
     let emptyCells = [];
-
-    world.tiles = [];
 
     for (let cell of world.cells) {
       let empty = true;
 
-      for (let [i, value] of cell.data.entries()) {
-        if (value == -1) continue;
+      cell.x /= 32;
+      cell.y /= 32;
 
-        empty = false;
+      for (let [i, tileIndex] of cell.data.entries()) {
+        let tile = data.tiles[tileIndex];
+        let index = world.tilePalette.indexOf(tile.id);
 
-        let tileId = data.tiles[value].id;
-        let index = world.tiles.indexOf(tileId);
+        if (tile.id != "pit") {
+          empty = false;
+        }
 
-        if (index == -1) index = world.tiles.push(tileId) - 1;
+        if (index == -1) {
+          world.tilePalette.push(tile.id);
+          index = world.tilePalette.length - 1;
+        }
 
         cell.data[i] = index;
       }
 
-      cell.data = encodeCloakCellData(cell.data);
-      cell.x /= world.width;
-      cell.y /= world.height;
-
       if (empty) {
-        emptyCells.push(world.cells.indexOf(cell));
+        emptyCells.push(cell);
       }
     }
 
-    while (emptyCells.length) world.cells.splice(emptyCells.pop(), 1);
+    while (emptyCells.length) {
+      world.cells.splice(world.cells.indexOf(emptyCells.pop()), 1);
+    }
+
+    world.chunks = world.cells;
+    delete world.cells;
+    delete world.width;
+    delete world.height;
   }
 }

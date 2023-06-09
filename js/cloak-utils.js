@@ -26,11 +26,11 @@ function drawCloakSprite(context, project, spriteName, x, y, width, height, colo
 
 
 async function fetchCloakData(folder) {
-  let file = await folder.getFileHandle("content.yml");
+  let file = await folder.getFileHandle("content.json");
   let fileBlob = await file.getFile();
   let fileText = await fileBlob.text();
 
-  return YAML.parse(fileText);
+  return JSON.parse(fileText);
 }
 
 
