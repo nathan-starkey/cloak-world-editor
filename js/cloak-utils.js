@@ -26,11 +26,23 @@ function drawCloakSprite(context, project, spriteName, x, y, width, height, colo
 
 
 async function fetchCloakData(folder) {
-  let file = await folder.getFileHandle("content.json");
-  let fileBlob = await file.getFile();
-  let fileText = await fileBlob.text();
+  let content = {
+    creatures: await grabFile("creatures.json"),
+    tiles: await grabFile("tiles.json"),
+    sprites: await grabFile("sprites.json"),
+    images: await grabFile("images.json"),
+    worlds: await grabFile("worlds.json")
+  };
 
-  return JSON.parse(fileText);
+  async function grabFile(fileName) {
+    let file = await folder.getFileHandle(fileName);
+    let fileBlob = await file.getFile();
+    let fileText = await fileBlob.text();
+
+    return JSON.parse(fileText);
+  }
+  
+  return content;
 }
 
 

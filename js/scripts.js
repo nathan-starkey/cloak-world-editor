@@ -113,8 +113,8 @@ function displayTileThumbs(editor, project) {
 
     thumbs.push(thumb);
     thumb.title = tile.name +
-      "\nSolid: " + tile.solid +
-      "\nOpaque: " + tile.opaque;
+      "\nSolid: " + tile.isSolid +
+      "\nOpaque: " + tile.isOpaque;
 
     thumb.onclick = ev => toggleTile(editor, thumbs, index, ev.shiftKey);
     tileList.append(thumb);
@@ -366,11 +366,13 @@ async function saveProject() {
     });
   });
 
-  let text = JSON.stringify(data, undefined, 2);
+  // NOTE: Text represents only the "worlds" property of the data object,
+  // as we are choosing specfically only to write the worlds output.
+  let text = JSON.stringify(data.worlds, undefined, 2);
 
   text = text.split("\"{wrap}").join("").split("{/wrap}\"").join("");
 
-  let file = await folder.getFileHandle("content.json");
+  let file = await folder.getFileHandle("worlds.json");
   let writable = await file.createWritable();
 
   await writable.write(text);
@@ -509,6 +511,12 @@ function processDataOutput(data) {
     delete tile.sprite;
   }
 
+  let pitTile = data.tiles.findIndex(tile => tile.id == "pit");
+
+  if (!pitTile) {
+    console.log("UNABLE TO LOCATE PIT TILE");
+  }
+
   for (let world of data.worlds) {
     let emptyCells = [];
 
@@ -519,7 +527,7 @@ function processDataOutput(data) {
       cell.y /= 32;
 
       for (let [i, tileIndex] of cell.data.entries()) {
-        let tile = data.tiles[tileIndex];
+        let tile = tileIndex == -1 ? pitTile : data.tiles[tileIndex];
         let index = world.tilePalette.indexOf(tile.id);
 
         if (tile.id != "pit") {
