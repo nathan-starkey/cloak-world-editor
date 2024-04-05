@@ -423,6 +423,9 @@ async function saveProject() {
 
   editor.markSaved();
   onChange();
+  
+  // Debug: Save button disabled issue
+  // saveBtn.disabled = true;
 }
 
 
@@ -555,5 +558,39 @@ function processDataOutput(data) {
     delete world.cells;
     delete world.width;
     delete world.height;
+
+    // Debug: Null tilePalette entries bug
+    purgeTilePaletteNulls(world);
   }
+}
+
+
+function purgeTilePaletteNulls(world) {
+  let replacementTile = "pit";
+  let tilePaletteOld = world.tilePalette;
+  let tilePaletteNew = Array.from(tilePaletteOld).filter(tileId => tileId != null);
+
+  world.chunks.forEach(chunk => {
+    chunk.data.forEach((tileIndexOld, i) => {
+      let tileId = tilePaletteOld[tileIndexOld];
+
+      if (tileId == null) {
+        tileId = replacementTile;
+
+        if (tilePaletteNew.indexOf(replacementTile) == -1) {
+          tilePaletteNew.push(replacementTile);
+        }
+      }
+
+      let tileIndex = tilePaletteNew.indexOf(tileId);
+
+      if (tileIndex == -1) {
+        console.error("unexpected error (tileIndex == -1)");
+      }
+
+      chunk.data[i] = tileIndex;
+    });
+  });
+
+  world.tilePalette = tilePaletteNew;
 }

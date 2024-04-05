@@ -9,6 +9,10 @@ class WorldEditor {
     this.spawn = undefined;
     
     this.savedCommand = undefined;
+
+    // Debug: Save button disabled issue
+    this.debug_callbackFn = callbackFn;
+    this.debug_thisArg = thisArg;
   }
   
   markSaved() {
@@ -111,7 +115,8 @@ class WorldEditor {
 
   render() {
     if (this.state) {
-      this.state.render();
+      for (let i = 0; i < 5; ++i)
+        this.state.render();
     }
   }
 
@@ -170,6 +175,9 @@ class WorldEditor {
     }
 
     this.changes.push([redo, undo.reverse()], false);
+
+    // Debug: Save button disabled issue
+    this.debug_callbackFn.call(this.debug_thisArg);
   }
 }
 
