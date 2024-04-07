@@ -117,7 +117,9 @@
           <table class="padding" oninput="contextPossiblyUnsaved = true; onChange();">
             <tr>
               <td>Creature ID
-              <td><input id="spawnCreatureId" oninput="editor.spawn.creatureId = this.value;">
+              <td>
+                <input id="spawnCreatureId" list="spawnCreatureList" oninput="editor.spawn.creatureId = this.value;">
+                <datalist id="spawnCreatureList"></datalist>
             <tr>
               <td>X
               <td><input id="spawnX" type="number" oninput="editor.spawn.x = this.valueAsNumber;">

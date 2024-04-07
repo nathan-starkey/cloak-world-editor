@@ -77,6 +77,14 @@ function displayProject(editor, project) {
   entryForm.hidden = true;
   editorForm.hidden = false;
 
+  for (let creature of project.data.creatures) {
+    let option = new Option();
+
+    option.value = creature.id;
+
+    spawnCreatureList.append(option);
+  }
+
   displayWorldButtons(editor, project);
   displayTileThumbs(editor, project);
 }

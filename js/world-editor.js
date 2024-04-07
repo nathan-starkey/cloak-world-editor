@@ -249,7 +249,7 @@ class WorldEditorState {
         let y = spawn.y;
         let width = creature?.width || 1;
         let height = creature?.height || 1;
-        let spriteName = creature?.sprite;
+        let spriteName = creature?.sprites?.[0];
         
         context.fillStyle = "black";
         context.globalAlpha = 0.8;
