@@ -144,6 +144,17 @@ function setDrawingControls(element, matrix, callback, thisArg) {
           }
         }
       }
+    } else if (mode == "chunk") {
+      if (ev.type == "pointerdown") {
+        let localX = Math.floor(point.x / 32) * 32;
+        let localY = Math.floor(point.y / 32) * 32;
+
+        for (let y = 0; y < 32; ++y) {
+          for (let x = 0; x < 32; ++x) {
+            pushPoint(localX + x, localY + y);
+          }
+        }
+      }
     } else if (mode == "line") {
       if (ev.type == "pointerdown") {
         pushPoint(point.x, point.y);
