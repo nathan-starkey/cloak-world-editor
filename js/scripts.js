@@ -466,20 +466,44 @@ function processDataInput(data) {
     image.name = image.id;
     image.sprites = [];
 
+    image.width = 10;
+    image.height = 10;
+
     for (let sprite of data.sprites) {
       if (sprite.image == image.id) {
-        image.sprites.push(sprite);
+        image.width = sprite.width;
+        image.height = sprite.height;
+        break;
       }
     }
 
-    image.width = image.sprites[0].width;
-    image.height = image.sprites[0].height;
+    let lastX = 0;
+    let lastY = 0;
 
-    image.sprites.sort((a, b) => a.x > b.x ? 1 : a.x == b.x ? 0 : -1).sort((a, b) => a.y > b.y ? 1 : a.y == b.y ? 0 : -1);
-    image.sprites = image.sprites.map(sprite => sprite.id);
+    for (let sprite of data.sprites) {
+      if (sprite.image == image.id) {
+        lastX = Math.max(lastX, sprite.x);
+        lastY = Math.max(lastY, sprite.y);
+      }
+    }
+
+    for (let y = 0; y <= lastY; y += image.height) {
+      for (let x = 0; x <= lastX; x += image.width) {
+        let id =
+          data.sprites.find(sprite => {
+            return sprite.image == image.id &&
+              sprite.x == x &&
+              sprite.y == y
+          })?.id || "";
+        
+        image.sprites.push(id);
+      }
+    }
     
     delete image.id;
     delete image.path;
+
+    console.log(image);
   }
 
   for (let tile of data.tiles) {
